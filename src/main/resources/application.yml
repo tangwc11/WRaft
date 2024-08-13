@@ -1,0 +1,14 @@
+server:
+  port: 8080
+
+wraft:
+  internal:
+    port: 10001
+
+
+
+#logging:
+#  level:
+#    com:
+#      wentry:
+#        wraft: debug
