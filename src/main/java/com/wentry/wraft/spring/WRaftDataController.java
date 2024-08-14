@@ -17,7 +17,8 @@ public class WRaftDataController {
 
     @GetMapping("/get")
     public String get(String key) {
-        return StorageManager.get(key);
+        return StorageManager.
+                get(key);
     }
 
     @GetMapping("/getAll")

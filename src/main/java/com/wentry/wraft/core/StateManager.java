@@ -34,15 +34,32 @@ public class StateManager {
 
     public static boolean compareAndSet(List<NodeStats> old, NodeStats newState) {
         for (NodeStats oldState : old) {
-            if (CURR_STATE.compareAndSet(oldState, newState)) {
+            if (cas(oldState, newState)) {
                 return true;
             }
         }
         return false;
     }
 
+    private static boolean cas(NodeStats oldState, NodeStats newState) {
+        boolean res = CURR_STATE.compareAndSet(oldState, newState);
+        if (res) {
+            stateChanged(oldState, newState);
+        }
+        return res;
+    }
+
+    private static void stateChanged(NodeStats oldState, NodeStats newState) {
+//        if (oldState == NodeStats.LEADER) {
+//            StorageManager.closeResources();
+//        }
+//        if (newState == NodeStats.LEADER) {
+//            StorageManager.injectDbStorage(new RocksDbStorage("wraft-db", true));
+//        }
+    }
+
     public static boolean compareAndSet(NodeStats old, NodeStats newState) {
-        return CURR_STATE.compareAndSet(old, newState);
+        return cas(old, newState);
     }
 
     public static void changeState(NodeStats newState) {

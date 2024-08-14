@@ -50,4 +50,14 @@ public class CmdLog {
         this.val = val;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "CmdLog{" +
+                "action=" + action +
+                ", logId='" + logId + '\'' +
+                ", key='" + key + '\'' +
+                ", val='" + val + '\'' +
+                '}';
+    }
 }

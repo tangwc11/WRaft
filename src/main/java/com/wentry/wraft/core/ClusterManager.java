@@ -16,9 +16,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -130,7 +132,9 @@ public class ClusterManager {
         for (Map.Entry<String, Channel> ety : nodes.entrySet()) {
             //发送心跳包给follower
             ety.getValue().writeAndFlush(
-                    new HeartBeatPacket().setCurrTerm(StateManager.getTerm().get()).setLeaderId(localId())
+                    new HeartBeatPacket()
+                            .setCurrTerm(StateManager.getTerm().get()).setLeaderId(localId())
+                            .setLeaderTermUUID(localId() + "-" + StateManager.getTerm())
             );
         }
     }
@@ -167,5 +171,14 @@ public class ClusterManager {
         HashMap<String, Integer> res = new HashMap<>(nodeIdMapHttpPort);
         res.put(ClusterManager.localId(), WRaftConfig.getInstance().getHttpPort());
         return res;
+    }
+
+    static Set<String> syncRecord = new HashSet<>();
+    public static boolean firstHeartbeatSyncData(String leaderTermUUID) {
+        return !syncRecord.contains(leaderTermUUID);
+    }
+
+    public static void recordFirstHeartBeatSyncData(String leaderTermUUID) {
+        syncRecord.add(leaderTermUUID);
     }
 }

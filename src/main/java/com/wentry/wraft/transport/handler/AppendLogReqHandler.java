@@ -26,7 +26,6 @@ public class AppendLogReqHandler extends SimpleChannelInboundHandler<AppendLogRe
             log.info("ignore for lastCmtLog not equal, local is:{}, leader is:{}", StorageManager.getLastCmtLogId(), msg.getLastCmtLogId());
             //请求同步全量数据
             ctx.writeAndFlush(new SyncAllDataReqPacket().setReqPeerId(ClusterManager.localId()));
-            return;
         }
 
         ctx.channel().writeAndFlush(new AppendLogAckPacket()

@@ -9,13 +9,12 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Description:
  * @Author: tangwc
  */
-public class LocalStorage implements IStorage {
+public class MemoryStorage implements IStorage {
 
     Map<String, String> data = new ConcurrentHashMap<>();
-
     @Override
-    public String set(String key, String val) {
-        return data.put(key, val);
+    public void set(String key, String val) {
+        data.put(key, val);
     }
 
     @Override
@@ -31,5 +30,10 @@ public class LocalStorage implements IStorage {
     @Override
     public void syncAllData(Map<String, String> allData) {
         data = allData;
+    }
+
+    @Override
+    public void close() {
+        //do nothing
     }
 }

@@ -50,6 +50,11 @@ public class HeartBeatHandler extends SimpleChannelInboundHandler<HeartBeatPacke
         if (StateManager.isFollower()) {
             //follower直接重置选举
             Scheduler.getInstance().electionCountdown();
+            //首次心跳，全量同步数据
+            if (ClusterManager.firstHeartbeatSyncData(msg.getLeaderTermUUID())) {
+                ClusterManager.recordFirstHeartBeatSyncData(msg.getLeaderTermUUID());
+                StorageManager.reqSyncAllData();
+            }
         } else if (StateManager.isCandidate()) {
             //candidate do nothing
         } else if (StateManager.isLeader()) {

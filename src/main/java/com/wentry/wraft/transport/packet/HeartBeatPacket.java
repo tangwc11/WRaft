@@ -12,6 +12,16 @@ public class HeartBeatPacket extends BasePacket{
 
     private int currTerm;
     private String leaderId;
+    private String leaderTermUUID;
+
+    public String getLeaderTermUUID() {
+        return leaderTermUUID;
+    }
+
+    public HeartBeatPacket setLeaderTermUUID(String leaderTermUUID) {
+        this.leaderTermUUID = leaderTermUUID;
+        return this;
+    }
 
     public int getCurrTerm() {
         return currTerm;
