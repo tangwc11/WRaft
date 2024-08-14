@@ -36,7 +36,10 @@ WRaft是一个Raft共识算法的MVP（Minimum Viable Product，最小可行产�
 
 效果演示：
 
-<video src="../../Downloads/演示.mov"></video>
+
+```HTML
+<video src="https://www.bilibili.com/video/BV1s1eJeCEqy/" controls="controls" width:100% height:auto></video>
+```
 
 
 
