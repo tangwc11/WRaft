@@ -46,7 +46,7 @@ public class AppendLogReqPacket extends BasePacket{
 
     @Override
     public int type() {
-        return APPEND_LOG;
+        return APPEND_LOG_REQ;
     }
 
     public String getReqId() {

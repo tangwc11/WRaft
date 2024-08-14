@@ -1,6 +1,6 @@
 ## WRaft是什么？
 
-WRaft是一个Raft共识算法的MVP（Minimum Viable Product，最小可行产品）实现，**仅用作个人学习与交流，不用做实际生产！！！**
+WRaft是一个Raft共识算法的MVP（Minimum Viable Product，最小可行产品）实现，**仅用作学习与交流，不建议直接用于生产**
 
 
 
@@ -34,50 +34,83 @@ WRaft是一个Raft共识算法的MVP（Minimum Viable Product，最小可行产�
 
 
 
+效果演示：
+
 <video src="../../Downloads/演示.mov"></video>
 
 
 
 ## 核心原理
 
-## 
+核心思想参考[Raft官网](https://raft.github.io/)，本实现完成了**故障转移**、**日志复制**两大特性，并提供数据持久化功能，数据持久化留有扩展接口，可以使用不同的持久化机制，默认采用**rocksdb**持久化。
 
-按照启动流程，其原理
+以下从两大特性进行原理解析：
 
-1. 先启动应用，此时应用还是单机版
-2. 访问/connect用于连接节点，进行节点连接，将节点两两相连构成一个集群，n个节点，连n-1次即可
-3. 集群任一节点访问/start，整个集群开启服务（注意：开启服务之后，新加的节点必须是单个加入，其初始为空状态，不支持集群之间的合并，因为无法判断集群间日志的先后）
-4. 开启服务之后，每个节点开启倒计时选举
-   1. 初始term从1开始，随机时间为300-450ms，节点状态变为candidate，首先投票自己，并向其余节点拉票
-   2. 投票开始前，建立快照：总票数
-   3. 其余节点投票条件：
-      1. 只投票比自己term大的
-      2. 自己需要是candidate或者follower状态，leader状态的不参与投票
-      3. 投票完之后
-         1. 投票之后，不会重置candidate倒计时，即在选出leader之前，该节点也会发起选举，换句话说，新的leader产生之前（以心跳事件为准），任何节点都有参选的权利
-         2. 如果投票时候，自己已经是candidate状态，此次选举不会被作废
-         3. 如果是follower，则会等待投票结果
-   4. 最先过半的节点，成为leader节点，停止选举调度，开启心跳调度。
-      1. 心跳有几个作用，主要是维护集群的活性，心跳的间隔时间为150-300ms，小于投票倒计时300-450ms。	
-         1. 接收到心跳的节点，判断心跳term是否大于等于自己，如果小于，则不回应
-         2. 如果等于当前term，则正常回应
-         3. 如果大于当前term，则说明是新的leader，则会更新自己的term和leader节点信息
-         4. 在接受到心跳的时刻，需要重置自己的candidate倒计时（相当于被leader”平反“了一次“起义”）
-   5. 心跳还有的作用为日志同步，这个在日志同步的时候再讨论
-5. 每个节点都有几个状态：initial、follower、candidate、leader，某些行为具有状态限制，比如：
-   1. leader不会响应拉票，直至新的leader产生被心跳信息修改term
-6. 关于日志合并：
-   1. 首先思考一个问题，两个不同的集群是否可以合并？如果可以，日志怎么合并？
-      1. 先考虑分区问题，小分区的新日志用于不会提交，因为无法满足过半，因此恢复分区之后，直接合并是没问题的，因为小分区根本没有新增的日志。
-      2. 而如果是完全不同的两个集群，term的时序与大小没有关联，因此无法进行合并。
-      3. 所以做一个限制，connect的时候，如果有节点是非start状态，则
-7. 访问/op开头的接口，进行节点状态变更，模拟各种状态
-8. 访问/data开头的接口，进行节点数据改查
+### 故障转移
+
+按照Raft算法理论，当故障发生时，集群的节点会自动发起选举，整个故障转移过程有以下几个要点：
+
+1. 集群中存在两个倒计时
+   1. **选举**倒计时：每个非Leader节点都会有选举倒计时，且间隔时间为`baseElectionTime+random(0,randomRangeElection) ms`
+   2. **心跳**倒计时：Leader节点有心跳倒计时，用于广播心跳包，间隔时间为`baseHeartTime+random(0,randomRangeHeart) ms`
+   3. 心跳倒计时的间隔要小于选举倒计时，且需要将网络延迟考虑在内。即`(baseHeartTime+randomRangeHeart) - baseElectionTime > RTT`
+2. 每个节点维护的有term，表示Leader任期
+   1. 大term优先级高于小term，比如小term的Leader接收到大Term的Leader的心跳时，自动转为Follower，**并丢弃自己的数据转而同步全量数据**
+   2. 每个Follower只对大于自己的term投票且只投第一票
+   3. Candidate每次选举发起都会递增term
+   4. Follower只响应大于等于自己term的心跳，并保持term同步
+3. 选举采取**过半原则**，只有过半的Follower响应，此次term的选举才会成功
+
+节点之间的状态流转示意图如下：
+
+<img src="imgs/image-20240814120143884.png" alt="image-20240814120143884" style="zoom:67%;" />
 
 
 
+整个集群的节点示意图如下，节点之间是两两互联，**Leader不停的向所有节点发送心跳以维护自己的地位，Follower节点不停的进行选举倒计时，以应对随时到来的网络中断从而保证故障转移使得集群能正常工作。**
+
+<img src="imgs/image-20240814110227406.png" alt="image-20240814110227406" style="zoom:50%;" />
 
 
-### 节点状态流转
 
-![QQ_1723559279893](imgs/QQ_1723559279893.png)
+### 日志复制
+
+日志操作的读对应集群的所有节点，写操作仅能由Leader处理，当请求到其余节点时，内部会进行请求**重定向**。一个完整的日志写入操作的流程是这样的：
+
+1. 节点接收到写请求，若为非Leader节点，发起重定向事件
+2. Leader节点接收到请求，将CmdLog放入CommttingQueue队列
+3. Leader节点会有一个线程定期从队列头部获取CmdLog，周知所有Leader节点，发起CmdLog提交的三步骤，即对应三个事件
+4. 当过半的Follower节点响应AppendLog后，开启提交，此时CmdLog从队列头部弹出，Leader处理下一个待提交日志
+
+整个过程示意图如下：
+
+<img src="imgs/image-20240814120301079.png" alt="image-20240814120301079" style="zoom:67%;" />
+
+
+
+### 事件驱动
+
+WRaft底层使用Netty作为通信框架，基于事件驱动，定义的事件类型如下：
+
+- 集群相关事件：
+  - **CLUSTER_CONNECT**：节点之间进行连接，构建成一个集群
+  - **START**：集群开启服务，各节点开启选举倒计时，会产生一个Leader
+  - **HEART_BEAT**：用于Leader向Follower探活，并重置Follower的选举发起倒计时
+  - **HEART_BEAT_RESP**：用于Follower响应心跳事件
+  - **SHUT_DOWN**：节点下线通知，用于剔除节点本地集群状态维护的Channel
+- 日志复制相关事件：
+  - **REDIRECT**：非Leader节点接收到写操作，进行请求转发至Leader节点
+  - **APPEND_LOG_REQ**：请求追加日志，日志复制的第一阶段
+  - **APPEND_LOG_ACK**：Follower响应Leader提交的AppendLogReq，日志复制的第二阶段
+  - **APPEND_LOG_CMT**：AppendLogReq接受过半之后，Leader发起最后的日志提交，此时Leader真正提交日志，数据被持久化，日志复制的第三阶段
+  - **SYNC_ALL_DATA_REQ**：全量拉取数据，当Follower发现数据不一致时，会全量拉取数据
+  - **SYNC_ALL_DATA_RESP**：全量数据同步返回，会搭载全量数据
+- 故障转移相关事件：
+  - **VOTE_REQ**：Follower在接受Heartbeat超时之后，将自己变更为candidate并广播选举请求
+  - **VOTE_RESP**：Follower接收到Candidate做出的选举响应，每个term只响应一次且大于自身的term
+  - **LEADER_CHANGE：Leader**变更通知，一种场景：当term小的Leader接收到大Term的Leader的心跳的时候，自己会变更为Follower，并发起该事件周知Leader变更。
+
+
+
+通过以上的事件驱动，整个服务器的内部相当于一个有限状态机，逻辑处理三部曲为：接受事件、处理逻辑、产生新的事件
+

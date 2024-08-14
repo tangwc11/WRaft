@@ -24,6 +24,6 @@ public class SyncAllDataReqPacket extends BasePacket{
 
     @Override
     public int type() {
-        return SYNC_ALL_DATA;
+        return SYNC_ALL_DATA_REQ;
     }
 }

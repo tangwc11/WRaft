@@ -10,7 +10,7 @@ public interface Packet {
     //心跳响应
     int HEART_BEAT_RESP = 2;
     //追加日志
-    int APPEND_LOG = 3;
+    int APPEND_LOG_REQ = 3;
     //追加待提交
     int APPEND_LOG_ACK = 4;
     //追加确认提交
@@ -30,7 +30,7 @@ public interface Packet {
     //节点下线
     int SHUT_DOWN = 14;
     //全量数据同步请求
-    int SYNC_ALL_DATA = 15;
+    int SYNC_ALL_DATA_REQ = 15;
     //全量数据同步返回
     int SYNC_ALL_DATA_RESP = 16;
 
