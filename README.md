@@ -68,13 +68,13 @@ WRaft是一个Raft共识算法的MVP（Minimum Viable Product，最小可行产�
 
 节点之间的状态流转示意图如下：
 
-<img src="imgs/image-20240814120143884.png" alt="image-20240814120143884" style="zoom: 67%;"  />
+<img src="imgs/image-20240814120143884.png" alt="image-20240814120143884" style="zoom: 67%;" width="50%"  />
 
 
 
 整个集群的节点示意图如下，节点之间是两两互联，**Leader不停的向所有节点发送心跳以维护自己的地位，Follower节点不停的进行选举倒计时，以应对随时到来的网络中断从而保证故障转移使得集群能正常工作。**
 
-<img src="imgs/image-20240814110227406.png" alt="image-20240814110227406" style="zoom:50%;" />
+<img src="imgs/image-20240814110227406.png" alt="image-20240814110227406" style="zoom:50%;" width="50%"   />
 
 
 
@@ -89,7 +89,7 @@ WRaft是一个Raft共识算法的MVP（Minimum Viable Product，最小可行产�
 
 整个过程示意图如下：
 
-<img src="imgs/image-20240814120301079.png" alt="image-20240814120301079" style="zoom:67%;" />
+<img src="imgs/image-20240814120301079.png" alt="image-20240814120301079" style="zoom:67%;" width="50%"   />
 
 
 
