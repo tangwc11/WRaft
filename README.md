@@ -1,6 +1,6 @@
 ## WRaft是什么？
 
-WRaft是一个Raft共识算法的MVP（Minimum Viable Product，最小可行产品）实现，**仅用作学习与交流，不建议直接用于生产**
+WRaft是一个Raft共识算法的MVP（Minimum Viable Product，最小可行产品）实现，**仅用作个人学习与交流，不用做实际生产**
 
 
 
