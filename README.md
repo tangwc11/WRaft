@@ -43,8 +43,6 @@ WRaft是一个Raft共识算法的MVP（Minimum Viable Product，最小可行产�
 
 
 
-
-
 ## 核心原理
 
 核心思想参考[Raft官网](https://raft.github.io/)，本实现完成了**故障转移**、**日志复制**两大特性，持久化实现默认采用rocksdb存储，可以自行扩展为其他持久化。
